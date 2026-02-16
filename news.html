@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News | Dignity/New York</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@3.4.0/lumen/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://use.fontawesome.com/releases/v6.5.1/js/all.js" defer crossorigin="anonymous"></script>
+</head>
+<body>
+  <a href="#main-content" class="sr-only sr-only-focusable">Skip to main content</a>
+
+  <div id="header-top" class="clearfix">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8">
+          <a class="logo" href="index.html" title="Home">
+            <img src="https://dignityny.org/sites/default/files/Dignity%20NY%20Chapter_logo_031021.jpg" alt="Home">
+          </a>
+        </div>
+        <div class="col-md-4">
+          <div class="contact-info">
+            <p class="fa-lg">
+              <i class="fa-solid fa-envelope"></i> <a href="mailto:contact@dignityny.org">contact@dignityny.org</a>
+              &nbsp;&nbsp;<i class="fa-solid fa-phone"></i> (646) 418-7039
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <header class="navbar navbar-default container" id="navbar" role="banner">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+      </button>
+    </div>
+    <div id="navbar-collapse" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="index.html">Home</a></li>
+        <li><a href="links.html">Links</a></li>
+        <li class="dropdown">
+          <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">Who We Are <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="about.html">Mission Statement</a></li>
+            <li><a href="about.html#steering">Steering Committee</a></li>
+            <li><a href="about.html#bylaws">Bylaws</a></li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          <a href="liturgy.html" class="dropdown-toggle" data-toggle="dropdown">What We Do <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li><a href="liturgy.html">Liturgy</a></li>
+            <li><a href="about.html#social-justice">Social Justice</a></li>
+            <li><a href="about.html#pastoral-care">Pastoral Care/AIDS Ministry</a></li>
+            <li><a href="about.html#groups">Groups of Dignity/New York</a></li>
+            <li><a href="https://vr2.verticalresponse.com/s/dignitynews" target="_blank" rel="noopener">Newsletter Sign-Up</a></li>
+          </ul>
+        </li>
+        <li><a href="press.html">Press Releases</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <div role="main" class="main-container container">
+    <div class="row">
+      <section class="col-sm-12">
+        <a id="main-content"></a>
+        <h1 class="page-header">News</h1>
+
+        <div id="news-list"></div>
+
+        <nav aria-label="Page navigation" class="text-center">
+          <ul class="pagination" id="news-pagination"></ul>
+        </nav>
+      </section>
+    </div>
+  </div>
+
+  <!-- Footer columns -->
+  <div id="footer-column" class="container">
+    <div class="row well">
+      <div class="col-md-4">
+        <section class="block">
+          <h2 class="block-title">Social Media</h2>
+          <p class="social-icons">
+            <a href="https://www.facebook.com/dignitynewyork/" target="_blank" rel="noopener"><i class="fab fa-facebook"></i></a>&nbsp;&nbsp;
+            <a href="https://www.threads.net/@dignity_ny" target="_blank" rel="noopener"><i class="fab fa-threads"></i></a>&nbsp;&nbsp;
+            <a href="https://www.instagram.com/dignity_ny/" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>&nbsp;&nbsp;
+            <a href="https://www.youtube.com/channel/UCtWunKOKhY3EVr9itIyKewg/videos" target="_blank" rel="noopener"><i class="fab fa-youtube"></i></a>
+          </p>
+        </section>
+      </div>
+      <div class="col-md-4">
+        <section class="block">
+          <h2 class="block-title">Liturgy</h2>
+          <p style="font-size:13px;">Every Sunday, 6:30 PM at St. John's in the Village with virtual broadcast online.</p>
+        </section>
+      </div>
+      <div class="col-md-4">
+        <section class="block">
+          <h2 class="block-title">Dignity/New York on Threads</h2>
+          <p style="font-size:13px;">Follow us on <a href="https://www.threads.net/@dignity_ny" target="_blank" rel="noopener">Threads @dignity_ny</a> for the latest updates.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer container" role="contentinfo">
+    <p>Copyright &copy; 2024 Dignity/New York, Inc.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+  <script>
+    (function() {
+      var PER_PAGE = 5;
+      var TEASER_LENGTH = 150;
+
+      function getPage() {
+        var params = new URLSearchParams(window.location.search);
+        var p = parseInt(params.get('page'), 10);
+        return (p > 0) ? p : 1;
+      }
+
+      function formatDate(dateStr) {
+        var d = new Date(dateStr + 'T00:00:00');
+        var months = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      }
+
+      function stripHtml(html) {
+        var div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+      }
+
+      function makeTeaserText(html) {
+        var text = stripHtml(html).trim();
+        if (text.length <= TEASER_LENGTH) return text;
+        return text.substring(0, TEASER_LENGTH) + '…';
+      }
+
+      function toggleReadMore(e) {
+        e.preventDefault();
+        var article = e.target.closest('article');
+        var teaser = article.querySelector('.teaser-text');
+        var full = article.querySelector('.full-body');
+        var link = e.target;
+        if (full.style.display === 'none') {
+          teaser.style.display = 'none';
+          full.style.display = 'block';
+          link.textContent = 'Show less';
+        } else {
+          teaser.style.display = 'block';
+          full.style.display = 'none';
+          link.textContent = 'Read more';
+        }
+      }
+
+      fetch('content/entries.json')
+        .then(function(res) { return res.json(); })
+        .then(function(entries) {
+          entries.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+          var totalPages = Math.ceil(entries.length / PER_PAGE);
+          var page = getPage();
+          if (page > totalPages) page = totalPages;
+
+          var start = (page - 1) * PER_PAGE;
+          var pageEntries = entries.slice(start, start + PER_PAGE);
+
+          // Render articles
+          var container = document.getElementById('news-list');
+          pageEntries.forEach(function(entry) {
+            var article = document.createElement('article');
+            article.className = 'teaser clearfix';
+            var dateHtml = entry.date ? '<div class="date" style="color:#999;font-size:12px;margin-bottom:6px;">' + formatDate(entry.date) + '</div>' : '';
+            var teaser = entry.body ? makeTeaserText(entry.body) : '';
+            var hasMore = entry.body && stripHtml(entry.body).trim().length > TEASER_LENGTH;
+            var teaserHtml = teaser ? '<div class="teaser-text"><p>' + teaser + '</p></div>' : '';
+            var fullHtml = entry.body ? '<div class="full-body" style="display:none;">' + entry.body + '</div>' : '';
+            var readMoreHtml = (entry.body && hasMore)
+              ? '<ul class="links inline list-inline"><li class="node-readmore"><a href="#" class="read-more-toggle">Read more</a></li></ul>'
+              : '';
+            article.innerHTML =
+              '<h2>' + entry.title + '</h2>' +
+              '<div class="content">' +
+                dateHtml +
+                teaserHtml +
+                fullHtml +
+                readMoreHtml +
+              '</div>';
+            var toggle = article.querySelector('.read-more-toggle');
+            if (toggle) toggle.addEventListener('click', toggleReadMore);
+            container.appendChild(article);
+          });
+
+          // Render pagination
+          var pag = document.getElementById('news-pagination');
+          if (totalPages <= 1) return;
+
+          var prevLi = document.createElement('li');
+          if (page === 1) prevLi.className = 'disabled';
+          prevLi.innerHTML = '<a href="news.html?page=' + (page - 1) + '" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>';
+          if (page === 1) prevLi.querySelector('a').removeAttribute('href');
+          pag.appendChild(prevLi);
+
+          for (var i = 1; i <= totalPages; i++) {
+            var li = document.createElement('li');
+            if (i === page) li.className = 'active';
+            li.innerHTML = '<a href="news.html?page=' + i + '">' + i + '</a>';
+            pag.appendChild(li);
+          }
+
+          var nextLi = document.createElement('li');
+          if (page === totalPages) nextLi.className = 'disabled';
+          nextLi.innerHTML = '<a href="news.html?page=' + (page + 1) + '" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>';
+          if (page === totalPages) nextLi.querySelector('a').removeAttribute('href');
+          pag.appendChild(nextLi);
+        });
+    })();
+  </script>
+</body>
+</html>
