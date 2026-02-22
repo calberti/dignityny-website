@@ -120,7 +120,7 @@
   <script>
     (function() {
       var PER_PAGE = 5;
-      var TEASER_LENGTH = 150;
+      var TEASER_LENGTH = 800;
 
       function getPage() {
         var params = new URLSearchParams(window.location.search);
@@ -167,7 +167,7 @@
       fetch('content/entries.json')
         .then(function(res) { return res.json(); })
         .then(function(entries) {
-          entries.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
 
           var totalPages = Math.ceil(entries.length / PER_PAGE);
           var page = getPage();
@@ -181,20 +181,25 @@
           pageEntries.forEach(function(entry) {
             var article = document.createElement('article');
             article.className = 'teaser clearfix';
-            var dateHtml = entry.date ? '<div class="date" style="color:#999;font-size:12px;margin-bottom:6px;">' + formatDate(entry.date) + '</div>' : '';
-            var teaser = entry.body ? makeTeaserText(entry.body) : '';
-            var hasMore = entry.body && stripHtml(entry.body).trim().length > TEASER_LENGTH;
-            var teaserHtml = teaser ? '<div class="teaser-text"><p>' + teaser + '</p></div>' : '';
-            var fullHtml = entry.body ? '<div class="full-body" style="display:none;">' + entry.body + '</div>' : '';
-            var readMoreHtml = (entry.body && hasMore)
-              ? '<ul class="links inline list-inline"><li class="node-readmore"><a href="#" class="read-more-toggle">Read more</a></li></ul>'
-              : '';
+            var hasBody = entry.body && entry.body.trim().length > 0;
+            var textContent = hasBody ? stripHtml(entry.body).trim() : '';
+            var isLong = textContent.length > TEASER_LENGTH;
+            var dateHtml = entry.date ? '<div class="date">' + formatDate(entry.date) + '</div>' : '';
+            var bodyHtml = '';
+            var readMoreHtml = '';
+            if (hasBody && isLong) {
+              bodyHtml =
+                '<div class="teaser-text"><p>' + makeTeaserText(entry.body) + '</p></div>' +
+                '<div class="full-body" style="display:none;">' + entry.body + '</div>';
+              readMoreHtml = '<div class="read-more-wrap"><a href="#" class="read-more-toggle">Read more</a></div>';
+            } else if (hasBody) {
+              bodyHtml = '<div class="full-body">' + entry.body + '</div>';
+            }
             article.innerHTML =
               '<h2>' + entry.title + '</h2>' +
               '<div class="content">' +
                 dateHtml +
-                teaserHtml +
-                fullHtml +
+                bodyHtml +
                 readMoreHtml +
               '</div>';
             var toggle = article.querySelector('.read-more-toggle');

@@ -2,11 +2,13 @@
 """
 Scrape all news stories from https://dignityny.org/news
 and save them to content/entries.json for the local website.
+Downloads all images locally to the images/ directory.
 
 Usage:
     python scrape_news.py
 """
 
+import hashlib
 import json
 import os
 import re
@@ -14,7 +16,7 @@ import sys
 import time
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, unquote
 
 # Fix console encoding on Windows
 if sys.stdout.encoding != "utf-8":
@@ -24,6 +26,7 @@ if sys.stdout.encoding != "utf-8":
 BASE_URL = "https://dignityny.org"
 NEWS_URL = f"{BASE_URL}/news"
 OUTPUT_FILE = "content/entries.json"
+IMAGES_DIR = "images"
 DELAY = 1  # seconds between requests to be polite
 
 
@@ -88,6 +91,37 @@ def collect_article_urls():
     return article_urls
 
 
+def make_local_filename(img_url):
+    """Generate a unique local filename for an image URL."""
+    parsed = urlparse(img_url)
+    # Get the original filename from the URL path
+    path = unquote(parsed.path)
+    basename = os.path.basename(path)
+    # Strip query params from name
+    basename = re.sub(r"\?.*$", "", basename)
+    # If no usable filename, create one from a hash
+    if not basename or not re.search(r"\.\w{2,5}$", basename):
+        ext = ".jpg"
+        basename = hashlib.md5(img_url.encode()).hexdigest()[:12] + ext
+    # Clean up special characters but keep the name readable
+    basename = re.sub(r"[^\w.\-]", "_", basename)
+    return basename
+
+
+def download_image(img_url, local_path):
+    """Download an image to a local path. Returns True on success."""
+    try:
+        r = requests.get(img_url, timeout=30, stream=True)
+        r.raise_for_status()
+        with open(local_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return True
+    except Exception as e:
+        print(f"\n    WARN: Failed to download {img_url}: {e}", flush=True)
+        return False
+
+
 def scrape_article(url):
     """Scrape a single article page for its full content."""
     soup = get_soup(url)
@@ -103,20 +137,44 @@ def scrape_article(url):
     # Body HTML - find the Drupal body field div
     body_div = article.find("div", class_="field--name-body")
     body_html = ""
+    images = []
+
     if body_div:
-        # Get the inner HTML content
+        # Process images: download locally and rewrite src to local paths
+        for img in body_div.find_all("img"):
+            src = img.get("src", "")
+            if not src:
+                continue
+            abs_url = urljoin(BASE_URL, src)
+
+            # Skip blob: URLs (can't be downloaded)
+            if abs_url.startswith("blob:"):
+                continue
+
+            local_name = make_local_filename(abs_url)
+            local_path = os.path.join(IMAGES_DIR, local_name)
+            local_ref = f"images/{local_name}"
+
+            # Download if not already present
+            if not os.path.exists(local_path):
+                if download_image(abs_url, local_path):
+                    images.append(local_ref)
+                    img["src"] = local_ref
+                # If download fails, keep the original absolute URL
+                else:
+                    img["src"] = abs_url
+            else:
+                images.append(local_ref)
+                img["src"] = local_ref
+
+            # Add responsive styling
+            img["style"] = "max-width:100%; height:auto;"
+
+        # Get the inner HTML content (now with local image paths)
         body_html = body_div.decode_contents().strip()
         # Clean up: remove <meta> tags and leading empty paragraphs
         body_html = re.sub(r"<meta[^>]*/>", "", body_html)
         body_html = re.sub(r"^\s*<p>\s*</p>\s*", "", body_html)
-
-    # Images: collect all image URLs from the body, as full absolute URLs
-    images = []
-    if body_div:
-        for img in body_div.find_all("img"):
-            src = img.get("src", "")
-            if src:
-                images.append(urljoin(BASE_URL, src))
 
     # Build canonical link (normalize URL)
     canonical_tag = soup.find("link", rel="canonical")
@@ -156,14 +214,18 @@ def main():
     print("  Dignity/New York News Scraper")
     print("=" * 60)
 
+    # Ensure images directory exists
+    os.makedirs(IMAGES_DIR, exist_ok=True)
+
     # Step 1: Collect all article URLs from listing pages
     print("\n[1/3] Collecting article URLs from listing pages...\n", flush=True)
     article_urls = collect_article_urls()
     print(f"\n  Total unique articles found: {len(article_urls)}\n", flush=True)
 
-    # Step 2: Visit each article to get full content
+    # Step 2: Visit each article to get full content and download images
     total = len(article_urls)
-    print(f"[2/3] Scraping full content from each article (0/{total})...\n", flush=True)
+    img_count = 0
+    print(f"[2/3] Scraping articles & downloading images (0/{total})...\n", flush=True)
     entries = []
     errors = []
     for i, url in enumerate(article_urls):
@@ -174,9 +236,12 @@ def main():
             if entry:
                 if not entry["date"]:
                     entry["date"] = try_extract_date_from_title(entry["title"])
+                num_imgs = len(entry["images"])
+                img_count += num_imgs
                 entries.append(entry)
-                title_short = entry["title"][:55]
-                print(f"OK - {title_short}", flush=True)
+                title_short = entry["title"][:50]
+                img_info = f" [{num_imgs} img]" if num_imgs else ""
+                print(f"OK{img_info} - {title_short}", flush=True)
             else:
                 print("WARN: no article found", flush=True)
         except Exception as e:
@@ -199,12 +264,14 @@ def main():
     print(f"\n{'=' * 60}")
     print(f"  DONE!")
     print(f"  Stories scraped: {len(entries)}")
+    print(f"  Images downloaded: {img_count}")
     print(f"  Errors: {len(errors)}")
     if errors:
         print(f"  Failed URLs:")
         for u in errors:
             print(f"    - {u}")
     print(f"  Output: {OUTPUT_FILE}")
+    print(f"  Images: {IMAGES_DIR}/")
     print(f"{'=' * 60}")
 
 

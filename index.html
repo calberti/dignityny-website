@@ -245,8 +245,16 @@
   <script>
     // Load content entries from JSON
     (function() {
-      var TEASER_COUNT = 3;
-      var TEASER_LENGTH = 150;
+      var TEASER_COUNT = 5;
+      var TEASER_LENGTH = 800;
+      var SIDEBAR_COUNT = 5;
+
+      function formatDate(dateStr) {
+        var d = new Date(dateStr + 'T00:00:00');
+        var months = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      }
 
       function stripHtml(html) {
         var div = document.createElement('div');
@@ -280,31 +288,42 @@
       fetch('content/entries.json')
         .then(function(res) { return res.json(); })
         .then(function(entries) {
-          entries.sort(function(a, b) { return b.date.localeCompare(a.date); });
 
           var teaserContainer = document.getElementById('news-teasers');
           var teaserCount = 0;
           entries.forEach(function(entry) {
-            if (teaserCount >= TEASER_COUNT || !entry.body) return;
+            if (teaserCount >= TEASER_COUNT) return;
             teaserCount++;
             var article = document.createElement('article');
             article.className = 'teaser clearfix';
-            var teaser = makeTeaserText(entry.body);
+            var hasBody = entry.body && entry.body.trim().length > 0;
+            var textContent = hasBody ? stripHtml(entry.body).trim() : '';
+            var isLong = textContent.length > TEASER_LENGTH;
+            var dateHtml = entry.date ? '<div class="date">' + formatDate(entry.date) + '</div>' : '';
+            var bodyHtml = '';
+            var readMoreHtml = '';
+            if (hasBody && isLong) {
+              bodyHtml =
+                '<div class="teaser-text"><p>' + makeTeaserText(entry.body) + '</p></div>' +
+                '<div class="full-body" style="display:none;">' + entry.body + '</div>';
+              readMoreHtml = '<div class="read-more-wrap"><a href="#" class="read-more-toggle">Read more</a></div>';
+            } else if (hasBody) {
+              bodyHtml = '<div class="full-body">' + entry.body + '</div>';
+            }
             article.innerHTML =
               '<h2>' + entry.title + '</h2>' +
               '<div class="content">' +
-                '<div class="teaser-text"><p>' + teaser + '</p></div>' +
-                '<div class="full-body" style="display:none;">' + entry.body + '</div>' +
-                '<ul class="links inline list-inline">' +
-                  '<li class="node-readmore"><a href="#" class="read-more-toggle">Read more</a></li>' +
-                '</ul>' +
+                dateHtml +
+                bodyHtml +
+                readMoreHtml +
               '</div>';
-            article.querySelector('.read-more-toggle').addEventListener('click', toggleReadMore);
+            var toggle = article.querySelector('.read-more-toggle');
+            if (toggle) toggle.addEventListener('click', toggleReadMore);
             teaserContainer.appendChild(article);
           });
 
           var sidebar = document.getElementById('recent-content-list');
-          entries.forEach(function(entry) {
+          entries.slice(0, SIDEBAR_COUNT).forEach(function(entry) {
             var li = document.createElement('li');
             li.innerHTML = '<a href="news.html">' + entry.title + '</a>';
             sidebar.appendChild(li);
