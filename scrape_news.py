@@ -100,26 +100,23 @@ def scrape_article(url):
     h1 = soup.find("h1")
     title = h1.get_text(strip=True) if h1 else ""
 
-    # Body HTML
-    body_div = article.find(
-        "div",
-        class_=lambda c: c and "field--name-body" in " ".join(c) if c else False,
-    )
+    # Body HTML - find the Drupal body field div
+    body_div = article.find("div", class_="field--name-body")
     body_html = ""
     if body_div:
         # Get the inner HTML content
         body_html = body_div.decode_contents().strip()
-        # Clean up: remove <meta> tags and excessive whitespace
+        # Clean up: remove <meta> tags and leading empty paragraphs
         body_html = re.sub(r"<meta[^>]*/>", "", body_html)
         body_html = re.sub(r"^\s*<p>\s*</p>\s*", "", body_html)
 
-    # Images: collect any images in the body and download-reference them
+    # Images: collect all image URLs from the body, as full absolute URLs
     images = []
     if body_div:
         for img in body_div.find_all("img"):
             src = img.get("src", "")
             if src:
-                images.append(urljoin(url, src))
+                images.append(urljoin(BASE_URL, src))
 
     # Build canonical link (normalize URL)
     canonical_tag = soup.find("link", rel="canonical")
